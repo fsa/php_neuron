@@ -46,10 +46,28 @@ abstract class Entity {
 
     public function inputPostDate($param) {
         $this->$param=filter_input(INPUT_POST, $param);
+        if(!$this->$param) {
+            $this->$param=null;
+        }
     }
 
     public function inputPostDatetime($param) {
         $this->$param=filter_input(INPUT_POST, $param);
+    }
+    
+    public function inputPostCheckbox($param) {
+        $this->$param=filter_input(INPUT_POST, $param)=='on';
+    }
+
+
+    public function inputPostChecboxArray($param) {
+        $this->$param=array_keys(filter_input(INPUT_POST, $param, FILTER_DEFAULT, FILTER_REQUIRE_ARRAY));
+    }
+
+    public static function getEntity($param, $method=INPUT_POST): self {
+        $id=filter_input($method, $param);
+        $class=get_called_class();
+        return $id?$class::fetch($id):new $class;
     }
 
     public static function fetch($id): ?self {
@@ -57,7 +75,8 @@ abstract class Entity {
         $s=DB::prepare('SELECT * FROM '.$class::TABLENAME.' WHERE '.$class::ID.'=?');
         $s->execute([$id]);
         $s->setFetchMode(PDO::FETCH_CLASS, $class);
-        return $s->fetch();
+        $result=$s->fetch();
+        return $result?$result:null;
     }
 
 }
